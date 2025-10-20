@@ -3,6 +3,8 @@ import { computed, ref, watch } from "vue";
 import PumpButton from "./components/pumpButton.vue";
 import { updatePump } from "./composables/usePump";
 
+const maxPumpAmount = 2000;
+
 const pumps = ref([
   { id: 0, active: false },
   { id: 1, active: false },
@@ -60,6 +62,12 @@ const incrementHour = () => {
 const decrementHour = () => {
   cycleHour.value--;
 };
+
+const barProgress = computed(() => {
+  let barPrecentage = (pumpAmount.value / maxPumpAmount) * 100;
+
+  return `linear-gradient(to right, #3b82f6 ${barPrecentage}%, #16245650 ${barPrecentage}%)`;
+});
 </script>
 <template>
   <form
@@ -92,8 +100,9 @@ const decrementHour = () => {
       v-model="pumpAmount"
       type="range"
       min="0"
-      max="2000"
-      class="w-full h-4 bg-cyan-950 rounded-none appearance-none cursor-pointer slider"
+      :max="maxPumpAmount"
+      :style="{ background: barProgress }"
+      class="w-full h-4 rounded-none appearance-none cursor-pointer slider bg-blue-950"
     />
     <h1 class="text-md">Water to pump: {{ pumpAmount }} ml</h1>
     <div class="flex flex-row w-full gap-4">
@@ -117,9 +126,6 @@ input[type="number"] {
   border: none;
   background: transparent;
   outline: none;
-}
-input[type="range"].slider::-webkit-progress-bar {
-  background: #fbbf24;
 }
 
 input[type="range"].slider::-webkit-slider-thumb {
