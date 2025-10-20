@@ -1,0 +1,38 @@
+@import url("https://fonts.googleapis.com/css2?family=Jersey+10&display=swap");
+@import "tailwindcss";
+
+:root {
+  font-family: "Jersey 10", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  --grid-col-0: rgb(56, 56, 56);
+  --grid-col-1: rgba(12, 111, 136, 0.432);
+}
+
+body {
+  padding: 3.5rem;
+  height: 100lvh;
+
+  border-radius: 0;
+  background-image: conic-gradient(
+    var(--grid-col-0) 0,
+    var(--grid-col-0) 90deg,
+    var(--grid-col-1) 90deg,
+    var(--grid-col-1) 180deg,
+    var(--grid-col-0) 180deg,
+    var(--grid-col-0) 270deg,
+    var(--grid-col-1) 270deg,
+    var(--grid-col-1) 360deg
+  );
+  background-size: 0.5rem 0.5rem;
+}
