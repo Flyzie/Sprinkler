@@ -2,6 +2,7 @@
 import { computed, ref, watch } from "vue";
 import PumpButton from "./components/pumpButton.vue";
 import { updatePump } from "./composables/usePump";
+import PumpsInfo from "./components/pumpsInfo.vue";
 
 const maxPumpAmount = 2000;
 
@@ -41,6 +42,14 @@ const handleUpdatePumps = async () => {
     console.error("Failed to update pumps", error);
   }
 };
+
+const toggleDisabled = computed(() => {
+  if (pumpAmount.value === 0 || cycleDay.value + cycleHour.value === 0) {
+    return true;
+  } else {
+    return false;
+  }
+});
 
 watch(cycleHour, (newValue) => {
   if (newValue < 0) {
@@ -91,8 +100,14 @@ const barProgress = computed(() => {
         />
         <h1 class="text-7xl">Hr's</h1>
         <div class="flex flex-row gap-2 w-full justify-end">
-          <button type="button" @click="incrementHour" class="text-8xl text-blue-500">+</button>
-          <button type="button" @click="decrementHour" class="text-8xl">-</button>
+          <button
+            type="button"
+            @click="incrementHour"
+            class="text-8xl cursor-pointer text-blue-500"
+          >
+            +
+          </button>
+          <button type="button" @click="decrementHour" class="text-8xl cursor-pointer">-</button>
         </div>
       </div>
     </div>
@@ -113,8 +128,27 @@ const barProgress = computed(() => {
         @activated="pump.active = !pump.active"
       ></PumpButton>
     </div>
-    <button type="submit" class="w-full p-6 bg-blue-500 text-4xl">Update {{ pumpLabel }}</button>
+    <div class="flex flex-col gap-2 w-full">
+      <button
+        type="submit"
+        :disabled="toggleDisabled"
+        class="w-full p-6 text-4xl cursor-pointer active:border-4 active:border-solid"
+        :class="toggleDisabled ? 'bg-blue-500/20' : 'bg-blue-500'"
+      >
+        Update {{ pumpLabel }}
+      </button>
+
+      <button
+        type="submit"
+        :disabled="toggleDisabled"
+        class="w-full p-2 text-4xl cursor-pointer active:border-4 active:border-solid"
+        :class="toggleDisabled ? 'bg-blue-500/20' : 'bg-blue-500'"
+      >
+        Pump Now
+      </button>
+    </div>
     <h1 v-if="updateSucces">Pumps Updated succesfully!</h1>
+    <PumpsInfo></PumpsInfo>
   </form>
 </template>
 

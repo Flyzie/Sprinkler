@@ -16,7 +16,7 @@ const changeButtonState = () => {
   <button
     type="button"
     @click="changeButtonState"
-    class="w-full text-2xl p-3 transition-colors"
+    class="w-full text-2xl p-3 transition-colors cursor-pointer"
     :class="isActive ? 'bg-emerald-500' : 'bg-indigo-500'"
   >
     {{ isActive ? "PUMP" : "PUMP" }}: {{ pumpId }}

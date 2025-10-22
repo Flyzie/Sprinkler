@@ -7,15 +7,21 @@ export interface PumpInfo {
 }
 
 export async function updatePump(pumpInfo: PumpInfo[]): Promise<PumpInfo[]> {
-  const payload = pumpInfo.map((pump) => {
-    return { pump: pump.pumpId, duration: pump.duration, cycle: pump.cycle };
-  });
-
   try {
-    const { data } = await api.post("/pumpUpdate", { data: payload });
+    const { data } = await api.post("/pumpUpdate", pumpInfo);
     return data;
   } catch (error: any) {
-    console.error("API Error:", error);
+    console.error("API pumpUpdate Error:", error);
+    throw error;
+  }
+}
+
+export async function getPumpsInfo(): Promise<PumpInfo[]> {
+  try {
+    const { data } = await api.get("/getPumps");
+    return data;
+  } catch (error: any) {
+    console.error("API getPumps Error:", error);
     throw error;
   }
 }

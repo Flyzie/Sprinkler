@@ -106,16 +106,19 @@ void setup() {
                 return;
             }
 
-            JsonArray data = doc["data"];
+            JsonArray pumpsArray = doc.as<JsonArray>();
 
-            Serial.println("JSON data: " + data);
+            Serial.println("JSON data: " + pumpsArray);
+            Serial.printf("JSON array size: %d\n", pumpsArray.size());
 
-            for(JsonObject pump : data){
-              int pumpId = pump["pump"];
+            for(JsonObject pump : pumpsArray){
+              int pumpId = pump["pumpId"];
               int duration = pump["duration"];
               int cycle = pump["cycle"];
 
-              if (pumpId < 0 || pumpId > 1 || duration < 0 || cycle < 0) {
+              Serial.printf("Processing - Pump: %d, Duration: %d, Cycle: %d\n", pumpId, duration, cycle);
+
+              if (pumpId < 0 || pumpId > 1 || duration <= 0 || cycle < 60000 || duration > cycle) {
                   request->send(400, "text/plain", "Invalid control inputs");
                   body = "";
                   return;
@@ -131,6 +134,24 @@ void setup() {
         }
       });
 
+  server.on("/getPumps", HTTP_GET, 
+      [](AsyncWebServerRequest *request)
+      {
+        JsonDocument doc;
+        JsonArray data = doc.to<JsonArray>();
+
+        for (size_t i = 0; i < pumps.size(); i++){
+          JsonObject pumpObj = data.add<JsonObject>();
+          pumpObj["pumpId"] = i;
+          pumpObj["duration"] = preferences.getULong(pumps[i].getKey("duration").c_str(), 0);
+          pumpObj["cycle"] = preferences.getULong(pumps[i].getKey("cycle").c_str(), 0);
+         }
+
+        String response;
+        serializeJson(doc, response);
+        request->send(200, "application/json", response);
+      });
+
   server.onNotFound([](AsyncWebServerRequest *request) {
   if (request->method() == HTTP_OPTIONS) {
     request->send(200);
@@ -138,6 +159,60 @@ void setup() {
     request->send(404, "text/plain", "Not found");
   }
   });
+
+  server.on("/pumpNow", HTTP_POST, 
+      [](AsyncWebServerRequest *request)
+      {
+        Serial.println("1");
+      },
+      [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final)
+      {
+        Serial.println("2");
+      },
+      [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+      {
+
+        body += String((char*)data).substring(0, len);
+
+        if (index + len == total) { 
+            Serial.println("Full JSON body: " + body);
+
+            JsonDocument doc; 
+            DeserializationError error = deserializeJson(doc, body);
+
+            if (error) {
+                request->send(400, "text/plain", "Invalid JSON");
+                body = "";
+                return;
+            }
+
+            JsonArray pumpsArray = doc.as<JsonArray>();
+
+            Serial.println("JSON data: " + pumpsArray);
+            Serial.printf("JSON array size: %d\n", pumpsArray.size());
+
+            for(JsonObject pump : pumpsArray){
+              int pumpId = pump["pumpId"];
+              int duration = pump["duration"];
+
+              Serial.printf("Processing - Pump: %d, Duration: %d", pumpId, duration);
+
+              if (pumpId < 0 || pumpId > 1 || duration <= 0) {
+                  request->send(400, "text/plain", "Invalid control inputs");
+                  body = "";
+                  return;
+              }
+
+              pumps[pumpId].setPumpNowFlag(true);
+
+            
+              Serial.printf("Pump: %d, Duration: %d", pumpId, duration);
+            }
+
+            request->send(200, "text/plain", "Pump(s) updated!");
+            body = ""; 
+        }
+      });
 
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
@@ -153,6 +228,7 @@ void loop() {
   for(Pump& pump : pumps){
     if(pump.getIsInitialized()){
     pump.pumpON(currentMillis, preferences);
+
     }
   }
 }
