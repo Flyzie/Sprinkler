@@ -9,6 +9,7 @@ Pump::Pump(int pin){
     isActive = false;
     pumpNowFlag = false;
     duration = 0;
+    pumpNowDuration = 0;
     cycle = 0;
     previousMillis = 0;
     startTime = 0;
@@ -27,11 +28,11 @@ void Pump::pumpON(unsigned long currentMillis, Preferences& prefs){
         this->previousMillis = currentMillis;
         prefs.putULong(getKey("prevMillis").c_str(), currentMillis);
         digitalWrite(this->pin, LOW);
-        Serial.println("Pump " + String(this->pin) + " turned ON");
+        Serial.println("Pump " + String(this->pin) + " turned OFF");
     }
 }
 
-void Pump::pumpNow(unsigned long currentMillis, unsigned long duration){
+void Pump::pumpNow(unsigned long currentMillis){
     if(!isActive){
         this->isActive = true;
         this->startTime = currentMillis;
@@ -39,10 +40,12 @@ void Pump::pumpNow(unsigned long currentMillis, unsigned long duration){
         Serial.println("Pump " + String(this->pin) + " turned ON");
     }
 
-    if(this->isActive && (currentMillis - this->startTime >= duration)){
+    if(this->isActive && (currentMillis - this->startTime >= this->pumpNowDuration)){
         this->isActive = false; 
         digitalWrite(this->pin, LOW);
-        Serial.println("Pump " + String(this->pin) + " turned ON");
+        this->pumpNowDuration = 0;
+        this->pumpNowFlag = false;
+        Serial.println("Pump " + String(this->pin) + " turned OFF");
     }
 }
 
@@ -84,8 +87,9 @@ bool Pump::getPumpNowFlag(){
     return this->pumpNowFlag;
 }
 
-bool Pump::setPumpNowFlag(bool value){
-    return this->pumpNowFlag = value;
+void Pump::setPumpNowFlag(bool value, unsigned int duration){
+    this->pumpNowDuration = duration;
+    this->pumpNowFlag = value;
 }
 
 String Pump::getKey(const char* baseName){

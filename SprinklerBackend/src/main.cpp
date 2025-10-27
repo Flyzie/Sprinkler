@@ -116,9 +116,9 @@ void setup() {
               int duration = pump["duration"];
               int cycle = pump["cycle"];
 
-              Serial.printf("Processing - Pump: %d, Duration: %d, Cycle: %d\n", pumpId, duration, cycle);
+             // Serial.printf("Processing - Pump: %d, Duration: %d, Cycle: %d\n", pumpId, duration, cycle);
 
-              if (pumpId < 0 || pumpId > 1 || duration <= 0 || cycle < 60000 || duration > cycle) {
+              if (pumpId < 0 || pumpId > 1 || duration <= 0 || duration > cycle) {
                   request->send(400, "text/plain", "Invalid control inputs");
                   body = "";
                   return;
@@ -151,14 +151,6 @@ void setup() {
         serializeJson(doc, response);
         request->send(200, "application/json", response);
       });
-
-  server.onNotFound([](AsyncWebServerRequest *request) {
-  if (request->method() == HTTP_OPTIONS) {
-    request->send(200);
-  } else {
-    request->send(404, "text/plain", "Not found");
-  }
-  });
 
   server.on("/pumpNow", HTTP_POST, 
       [](AsyncWebServerRequest *request)
@@ -195,7 +187,7 @@ void setup() {
               int pumpId = pump["pumpId"];
               int duration = pump["duration"];
 
-              Serial.printf("Processing - Pump: %d, Duration: %d", pumpId, duration);
+             // Serial.printf("Processing - Pump: %d, Duration: %d", pumpId, duration);
 
               if (pumpId < 0 || pumpId > 1 || duration <= 0) {
                   request->send(400, "text/plain", "Invalid control inputs");
@@ -203,16 +195,26 @@ void setup() {
                   return;
               }
 
-              pumps[pumpId].setPumpNowFlag(true);
+              pumps[pumpId].setPumpNowFlag(true, duration);
 
             
-              Serial.printf("Pump: %d, Duration: %d", pumpId, duration);
+              Serial.printf("Pump: %d, Duration: %d\n", pumpId, duration);
             }
 
-            request->send(200, "text/plain", "Pump(s) updated!");
+            request->send(200, "text/plain", "PUMPS SHOULD BE ACTIVE");
             body = ""; 
         }
       });
+
+  server.onNotFound([](AsyncWebServerRequest *request) {
+  if (request->method() == HTTP_OPTIONS) {
+    request->send(200);
+  } else {
+    request->send(404, "text/plain", "Not found");
+  }
+  });
+
+  
 
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
@@ -226,9 +228,10 @@ void setup() {
 void loop() {
   unsigned long currentMillis = millis();
   for(Pump& pump : pumps){
-    if(pump.getIsInitialized()){
-    pump.pumpON(currentMillis, preferences);
-
+    if(pump.getPumpNowFlag()){
+      pump.pumpNow(currentMillis);
+    } else if(pump.getIsInitialized()){
+      pump.pumpON(currentMillis, preferences);
     }
   }
 }

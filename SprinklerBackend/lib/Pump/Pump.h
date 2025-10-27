@@ -11,6 +11,7 @@ class Pump {
     bool isActive;
     bool pumpNowFlag;
     unsigned long duration;
+    unsigned long pumpNowDuration;
     unsigned long cycle;
     unsigned long previousMillis;
     unsigned long startTime;
@@ -18,13 +19,13 @@ class Pump {
   public:
     Pump(int pin);
     void pumpON(unsigned long currentMillis, Preferences& prefs);
-    void pumpNow(unsigned long currentMillis, unsigned long duration);
+    void pumpNow(unsigned long currentMillis);
     void update(unsigned long duration, unsigned long cycle, Preferences& prefs);
     void loadFromPrefs(Preferences& prefs);
     bool getIsActive();
     bool getIsInitialized();
     bool getPumpNowFlag();
-    bool setPumpNowFlag(bool value);
+    void setPumpNowFlag(bool value, unsigned int duration);
     String getKey(const char* baseName);
 };
 
