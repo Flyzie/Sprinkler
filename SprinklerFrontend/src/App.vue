@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import PumpButton from "./components/pumpButton.vue";
-import { updatePump } from "./composables/usePump";
+import { getPumpsInfo, pumpNow, updatePump, type PumpInfo } from "./composables/usePump";
 import PumpsInfo from "./components/pumpsInfo.vue";
 
 const maxPumpAmount = 2000;
@@ -11,17 +11,61 @@ const pumps = ref([
   { id: 1, active: false },
 ]);
 
+const pumpsInfo = ref<PumpInfo[]>([]);
+
 const pumpAmount = ref<number>(0);
 const cycleHour = ref<number>(0);
 const cycleDay = ref<number>(0);
-
-const updateSucces = ref<boolean>(false);
 
 const pumpLabel = computed(() => {
   return pumps.value.length > 1 ? "Pumps" : "Pump";
 });
 
 const handleUpdatePumps = async () => {
+  const activePumps = filterActivePumps();
+
+  if (!activePumps) {
+    return;
+  }
+
+  try {
+    await updatePump(activePumps);
+    await handleGetPumpInfo();
+  } catch (error) {
+    console.error("Failed to update pumps", error);
+  }
+};
+
+const handlePumpNow = async () => {
+  const activePumps = filterActivePumps();
+
+  if (!activePumps) {
+    return;
+  }
+
+  try {
+    await pumpNow(activePumps);
+  } catch (error) {
+    console.error("Failed to pump now", error);
+  }
+};
+
+const handleGetPumpInfo = async () => {
+  const data = await getPumpsInfo();
+  console.log(data);
+
+  pumpsInfo.value = data;
+};
+
+const toggleDisabled = computed(() => {
+  if (pumpAmount.value === 0 || cycleDay.value + cycleHour.value === 0) {
+    return true;
+  } else {
+    return false;
+  }
+});
+
+const filterActivePumps = () => {
   const activePumps = pumps.value
     .filter((pump) => pump.active)
     .map((pump) => ({
@@ -32,23 +76,24 @@ const handleUpdatePumps = async () => {
 
   if (activePumps.length === 0) {
     alert("Please select at least one pump");
-    return;
-  }
-
-  try {
-    await updatePump(activePumps);
-    updateSucces.value = true;
-  } catch (error) {
-    console.error("Failed to update pumps", error);
+    return false;
+  } else {
+    return activePumps;
   }
 };
 
-const toggleDisabled = computed(() => {
-  if (pumpAmount.value === 0 || cycleDay.value + cycleHour.value === 0) {
-    return true;
-  } else {
-    return false;
-  }
+const incrementHour = () => {
+  cycleHour.value++;
+};
+
+const decrementHour = () => {
+  cycleHour.value--;
+};
+
+const barProgress = computed(() => {
+  let barPrecentage = (pumpAmount.value / maxPumpAmount) * 100;
+
+  return `linear-gradient(to right, #3b82f6 ${barPrecentage}%, #16245650 ${barPrecentage}%)`;
 });
 
 watch(cycleHour, (newValue) => {
@@ -64,18 +109,8 @@ watch(cycleHour, (newValue) => {
   }
 });
 
-const incrementHour = () => {
-  cycleHour.value++;
-};
-
-const decrementHour = () => {
-  cycleHour.value--;
-};
-
-const barProgress = computed(() => {
-  let barPrecentage = (pumpAmount.value / maxPumpAmount) * 100;
-
-  return `linear-gradient(to right, #3b82f6 ${barPrecentage}%, #16245650 ${barPrecentage}%)`;
+onMounted(() => {
+  handleGetPumpInfo();
 });
 </script>
 <template>
@@ -132,23 +167,22 @@ const barProgress = computed(() => {
       <button
         type="submit"
         :disabled="toggleDisabled"
-        class="w-full p-6 text-4xl cursor-pointer active:border-4 active:border-solid"
+        class="w-full p-6 text-4xl cursor-pointer active:bg-emerald-500"
         :class="toggleDisabled ? 'bg-blue-500/20' : 'bg-blue-500'"
       >
         Update {{ pumpLabel }}
       </button>
 
       <button
-        type="submit"
-        :disabled="toggleDisabled"
-        class="w-full p-2 text-4xl cursor-pointer active:border-4 active:border-solid"
-        :class="toggleDisabled ? 'bg-blue-500/20' : 'bg-blue-500'"
+        @click="handlePumpNow"
+        :disabled="pumpAmount <= 0"
+        class="w-full p-2 text-4xl cursor-pointer active:bg-emerald-500"
+        :class="pumpAmount <= 0 ? 'bg-blue-500/20' : 'bg-blue-500'"
       >
         Pump Now
       </button>
     </div>
-    <h1 v-if="updateSucces">Pumps Updated succesfully!</h1>
-    <PumpsInfo></PumpsInfo>
+    <PumpsInfo :pumps-info="pumpsInfo"></PumpsInfo>
   </form>
 </template>
 

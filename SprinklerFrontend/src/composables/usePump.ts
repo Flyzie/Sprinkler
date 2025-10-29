@@ -25,3 +25,13 @@ export async function getPumpsInfo(): Promise<PumpInfo[]> {
     throw error;
   }
 }
+
+export async function pumpNow(pumpNowInfo: Pick<PumpInfo, "pumpId" | "duration">[]) {
+  try {
+    const { data } = await api.post("/pumpNow", pumpNowInfo);
+    return data;
+  } catch (error: any) {
+    console.error("API pumpNow Error:", error);
+    throw error;
+  }
+}
