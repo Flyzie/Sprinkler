@@ -21,6 +21,7 @@ class Pump {
     void pumpON(unsigned long currentMillis, Preferences& prefs);
     void pumpNow(unsigned long currentMillis);
     void update(unsigned long duration, unsigned long cycle, Preferences& prefs);
+    void reset(Preferences& prefs);
     void loadFromPrefs(Preferences& prefs);
     bool getIsActive();
     bool getIsInitialized();

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import PumpButton from "./components/pumpButton.vue";
-import { getPumpsInfo, pumpNow, updatePump, type PumpInfo } from "./composables/usePump";
+import { getPumpsInfo, pumpNow, resetPump, updatePump, type PumpInfo } from "./composables/usePump";
 import PumpsInfo from "./components/pumpsInfo.vue";
 
 const maxPumpAmount = 2000;
@@ -18,7 +18,7 @@ const cycleHour = ref<number>(0);
 const cycleDay = ref<number>(0);
 
 const pumpLabel = computed(() => {
-  return pumps.value.length > 1 ? "Pumps" : "Pump";
+  return pumps.value.filter((pump) => pump.active).length > 1 ? "Pumps" : "Pump";
 });
 
 const handleUpdatePumps = async () => {
@@ -32,7 +32,7 @@ const handleUpdatePumps = async () => {
     await updatePump(activePumps);
     await handleGetPumpInfo();
   } catch (error) {
-    console.error("Failed to update pumps", error);
+    console.error(`Failed to update ${pumpLabel}`, error);
   }
 };
 
@@ -55,6 +55,24 @@ const handleGetPumpInfo = async () => {
   console.log(data);
 
   pumpsInfo.value = data;
+};
+
+const handleResetPumps = async () => {
+  const activePumps = pumps.value.filter((pump) => pump.active);
+
+  if (activePumps.length === 0) {
+    alert("Please select at least one pump");
+    return;
+  }
+
+  const selectedPumps = activePumps.map((pump) => ({ pumpId: pump.id }));
+
+  try {
+    await resetPump(selectedPumps);
+    await handleGetPumpInfo();
+  } catch (error) {
+    console.error(`Failed to reset ${pumpLabel}`, error);
+  }
 };
 
 const toggleDisabled = computed(() => {
@@ -173,16 +191,26 @@ onMounted(() => {
         Update {{ pumpLabel }}
       </button>
 
-      <button
-        @click="handlePumpNow"
-        :disabled="pumpAmount <= 0"
-        class="w-full p-2 text-4xl cursor-pointer active:bg-emerald-500"
-        :class="pumpAmount <= 0 ? 'bg-blue-500/20' : 'bg-blue-500'"
-      >
-        Pump Now
-      </button>
+      <div class="flex gap-2">
+        <button
+          @click="handlePumpNow"
+          :disabled="pumpAmount <= 0"
+          class="w-full p-2 text-2xl cursor-pointer active:bg-emerald-500"
+          :class="pumpAmount <= 0 ? 'bg-blue-500/20' : 'bg-blue-500'"
+        >
+          Pump Now
+        </button>
+        <button
+          @click="handleResetPumps"
+          :disabled="pumps.filter((pump) => pump.active).length < 1"
+          class="w-full p-2 text-2xl cursor-pointer active:bg-emerald-500"
+          :class="pumps.filter((pump) => pump.active).length > 0 ? 'bg-red-500' : 'bg-red-500/20'"
+        >
+          Reset {{ pumpLabel }}
+        </button>
+      </div>
     </div>
-    <PumpsInfo :pumps-info="pumpsInfo"></PumpsInfo>
+    <PumpsInfo v-model="pumpsInfo"></PumpsInfo>
   </form>
 </template>
 

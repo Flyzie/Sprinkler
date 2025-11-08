@@ -35,3 +35,13 @@ export async function pumpNow(pumpNowInfo: Pick<PumpInfo, "pumpId" | "duration">
     throw error;
   }
 }
+
+export async function resetPump(resetInfo: Pick<PumpInfo, "pumpId">[]) {
+  try {
+    const { data } = await api.post("/resetPump", resetInfo);
+    return data;
+  } catch (error: any) {
+    console.error("API resetPump Error:", error);
+    throw error;
+  }
+}

@@ -57,7 +57,16 @@ void Pump::update(unsigned long duration, unsigned long cycle, Preferences& pref
 
     prefs.putULong(getKey("duration").c_str(), duration);
     prefs.putULong(getKey("cycle").c_str(), cycle);
-    prefs.putULong(getKey("prevMillis").c_str(), millis());
+    prefs.putULong(getKey("prevMillis").c_str(), this->previousMillis);
+}
+
+void Pump::reset(Preferences& prefs){
+    this->isInitialized = false;
+    this->duration = 0;
+    this->cycle = 0;
+    
+    prefs.putULong(getKey("duration").c_str(), 0);
+    prefs.putULong(getKey("cycle").c_str(), 0);
 }
 
 void Pump::loadFromPrefs(Preferences& prefs){

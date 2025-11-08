@@ -118,7 +118,7 @@ void setup() {
 
              // Serial.printf("Processing - Pump: %d, Duration: %d, Cycle: %d\n", pumpId, duration, cycle);
 
-              if (pumpId < 0 || pumpId > 1 || duration <= 0 || duration > cycle) {
+              if (pumpId < 0 || pumpId > 1 || duration <= 0 || duration > cycle || cycle == 0) {
                   request->send(400, "text/plain", "Invalid control inputs");
                   body = "";
                   return;
@@ -202,6 +202,58 @@ void setup() {
             }
 
             request->send(200, "text/plain", "PUMPS SHOULD BE ACTIVE");
+            body = ""; 
+        }
+      });
+
+  server.on("/resetPump", HTTP_POST, 
+      [](AsyncWebServerRequest *request)
+      {
+        Serial.println("1");
+      },
+      [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final)
+      {
+        Serial.println("2");
+      },
+      [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+      {
+
+        body += String((char*)data).substring(0, len);
+
+        if (index + len == total) { 
+            Serial.println("Full JSON body: " + body);
+
+            JsonDocument doc; 
+            DeserializationError error = deserializeJson(doc, body);
+
+            if (error) {
+                request->send(400, "text/plain", "Invalid JSON");
+                body = "";
+                return;
+            }
+
+            JsonArray pumpsArray = doc.as<JsonArray>();
+
+            Serial.println("JSON data: " + pumpsArray);
+            Serial.printf("JSON array size: %d\n", pumpsArray.size());
+
+            for(JsonObject pump : pumpsArray){
+              int pumpId = pump["pumpId"];
+
+
+              if (pumpId < 0 || pumpId > 1) {
+                  request->send(400, "text/plain", "Invalid control inputs");
+                  body = "";
+                  return;
+              }
+
+              pumps[pumpId].reset(preferences);
+
+            
+              Serial.printf("Pump: %d, reset", pumpId);
+            }
+
+            request->send(200, "text/plain", "Pumps reset");
             body = ""; 
         }
       });
