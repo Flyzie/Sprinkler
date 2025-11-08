@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "build:esp": "pnpm build && pnpm copy:esp",
+    "copy:esp": "powershell -Command \"Copy-Item -Path .\\dist\\* -Destination ..\\SprinklerBackend\\data\\ -Recurse -Force\"",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -23,6 +25,7 @@
     "prettier": "^3.6.2",
     "typescript": "~5.9.3",
     "vite": "^7.1.7",
+    "vite-plugin-pwa": "^1.1.0",
     "vue-tsc": "^3.1.0"
   }
 }
