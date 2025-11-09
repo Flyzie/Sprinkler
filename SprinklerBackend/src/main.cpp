@@ -2,6 +2,7 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
+#include <LittleFS.h>
 #include <esp_timer.h>
 #include <Pump.h>
 #include <vector>
@@ -33,6 +34,11 @@ vector<Pump> pumps;
 void setup() {
   Serial.begin(115200);
 
+  if(!LittleFS.begin(true)){
+    Serial.println("LittleFS Mount Failed");
+    return;
+  }
+
   preferences.begin("pumps-refs", false);
 
   pumps.push_back(Pump(PIN1));
@@ -60,7 +66,7 @@ void setup() {
     Serial.println(ssid);
   }
 
-  if (!MDNS.begin("sprinkler")) { 
+  if (!MDNS.begin(MDNS_HOSTNAME)) { 
     Serial.println("Error setting up MDNS responder!");
   } else {
     Serial.println("mDNS responder started");
@@ -74,9 +80,10 @@ void setup() {
   Serial.print(":");
   Serial.println(PORT);
 
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-  request->send(200, "text/plain", "Hello from ESP32!");
-  });
+  // Removed the "/" route so static files can be served from LittleFS
+  // server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+  //   request->send(200, "text/plain", "Hello from ESP32!");
+  // });
 
   static String body;
 
@@ -271,6 +278,8 @@ void setup() {
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
 
   server.begin();
   Serial.println("Server started!");
