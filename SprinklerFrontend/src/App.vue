@@ -89,7 +89,7 @@ const filterActivePumps = () => {
     .map((pump) => ({
       pumpId: pump.id,
       duration: pumpAmount.value * 28,
-      cycle: (cycleDay.value * 24 + cycleHour.value) * 60 * 1000,
+      cycle: (cycleDay.value * 24 + cycleHour.value) * 1000 * 3600,
     }));
 
   if (activePumps.length === 0) {
@@ -132,10 +132,7 @@ onMounted(() => {
 });
 </script>
 <template>
-  <form
-    @submit.prevent="handleUpdatePumps"
-    class="flex flex-col items-start justify-start w-full gap-6"
-  >
+  <div class="flex flex-col items-start justify-start w-full gap-6">
     <div class="flex flex-col w-full items-start justify-center">
       <h1 class="text-4xl">Water every:</h1>
       <div class="flex flex-row w-full items-center">
@@ -183,7 +180,7 @@ onMounted(() => {
     </div>
     <div class="flex flex-col gap-2 w-full">
       <button
-        type="submit"
+        @click="handleUpdatePumps"
         :disabled="toggleDisabled"
         class="w-full p-6 text-4xl cursor-pointer active:bg-emerald-500"
         :class="toggleDisabled ? 'bg-blue-500/20' : 'bg-blue-500'"
@@ -211,7 +208,7 @@ onMounted(() => {
       </div>
     </div>
     <PumpsInfo v-model="pumpsInfo"></PumpsInfo>
-  </form>
+  </div>
 </template>
 
 <style scoped>

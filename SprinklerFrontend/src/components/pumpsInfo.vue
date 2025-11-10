@@ -13,7 +13,7 @@ const pumpsInfo = defineModel<PumpInfo[]>();
       <h1 class="w-full text-3xl">PUMP: {{ pumpInfo.pumpId }}</h1>
       <div class="w-full">
         <p>Water per run: {{ Math.round(pumpInfo.duration / 28) }}ml</p>
-        <p>Run every: {{ parseFloat((pumpInfo.cycle / 60000).toFixed(1)) }}h</p>
+        <p>Run every: {{ parseFloat((pumpInfo.cycle / 3600000).toFixed(1)) }}h</p>
       </div>
     </div>
   </div>
