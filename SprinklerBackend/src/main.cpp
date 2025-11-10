@@ -17,6 +17,7 @@ const char* password = WIFI_PASSWORD;
 
 const int PORT = SERVER_PORT;
 
+unsigned long currentMillis = millis();
 
 AsyncWebServer server(PORT);
 
@@ -98,7 +99,7 @@ void setup() {
       },
       [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
       {
-
+        Serial.println("REQUEST DATA: --------------------------");
         body += String((char*)data).substring(0, len);
 
         if (index + len == total) { 
@@ -131,11 +132,12 @@ void setup() {
                   return;
               }
 
-              pumps[pumpId].update(duration, cycle, preferences);
+              pumps[pumpId].update(duration, cycle, preferences, currentMillis);
 
               Serial.printf("Pump: %d, Duration: %d, Cycle: %d\n", pumpId, duration, cycle);
             }
 
+            Serial.println("--------------------------");
             request->send(200, "text/plain", "Pump(s) updated!");
             body = ""; 
         }
@@ -170,7 +172,7 @@ void setup() {
       },
       [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
       {
-
+        Serial.println("REQUEST DATA: --------------------------");
         body += String((char*)data).substring(0, len);
 
         if (index + len == total) { 
@@ -207,6 +209,7 @@ void setup() {
             
               Serial.printf("Pump: %d, Duration: %d\n", pumpId, duration);
             }
+            Serial.println("--------------------------");
 
             request->send(200, "text/plain", "PUMPS SHOULD BE ACTIVE");
             body = ""; 
@@ -226,6 +229,7 @@ void setup() {
       {
 
         body += String((char*)data).substring(0, len);
+        Serial.println("REQUEST DATA: --------------------------");
 
         if (index + len == total) { 
             Serial.println("Full JSON body: " + body);
@@ -259,7 +263,7 @@ void setup() {
             
               Serial.printf("Pump: %d, reset", pumpId);
             }
-
+            Serial.println("--------------------------");
             request->send(200, "text/plain", "Pumps reset");
             body = ""; 
         }
@@ -287,7 +291,7 @@ void setup() {
 
 
 void loop() {
-  unsigned long currentMillis = millis();
+  
   for(Pump& pump : pumps){
     if(pump.getPumpNowFlag()){
       pump.pumpNow(currentMillis);

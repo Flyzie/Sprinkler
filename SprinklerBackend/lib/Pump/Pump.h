@@ -20,7 +20,7 @@ class Pump {
     Pump(int pin);
     void pumpON(unsigned long currentMillis, Preferences& prefs);
     void pumpNow(unsigned long currentMillis);
-    void update(unsigned long duration, unsigned long cycle, Preferences& prefs);
+    void update(unsigned long duration, unsigned long cycle, Preferences& prefs, unsigned long currentMillis);
     void reset(Preferences& prefs);
     void loadFromPrefs(Preferences& prefs);
     bool getIsActive();

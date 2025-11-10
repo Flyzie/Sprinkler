@@ -20,15 +20,14 @@ void Pump::pumpON(unsigned long currentMillis, Preferences& prefs){
         this->isActive = true;
         this->startTime = currentMillis;
         digitalWrite(this->pin, HIGH);
-        Serial.println("Pump " + String(this->pin) + " turned ON");
+        Serial.println("Pump " + String(this->pin) + " turned ON " + "at: " + millis() + " current millis: " + currentMillis);
     }
 
     if(this->isActive && (currentMillis - this->startTime >= this->duration)){
         this->isActive = false; 
         this->previousMillis = currentMillis;
-        prefs.putULong(getKey("prevMillis").c_str(), currentMillis);
         digitalWrite(this->pin, LOW);
-        Serial.println("Pump " + String(this->pin) + " turned OFF");
+        Serial.println("Pump " + String(this->pin) + " turned OFF " + "at: " + millis());
     }
 }
 
@@ -37,7 +36,7 @@ void Pump::pumpNow(unsigned long currentMillis){
         this->isActive = true;
         this->startTime = currentMillis;
         digitalWrite(this->pin, HIGH);
-        Serial.println("Pump " + String(this->pin) + " turned ON");
+        Serial.println("Pump " + String(this->pin) + " turned ON " + "at: " + millis());
     }
 
     if(this->isActive && (currentMillis - this->startTime >= this->pumpNowDuration)){
@@ -45,19 +44,20 @@ void Pump::pumpNow(unsigned long currentMillis){
         digitalWrite(this->pin, LOW);
         this->pumpNowDuration = 0;
         this->pumpNowFlag = false;
-        Serial.println("Pump " + String(this->pin) + " turned OFF");
+        Serial.println("Pump " + String(this->pin) + " turned OFF " + "at: " + millis());
     }
 }
 
-void Pump::update(unsigned long duration, unsigned long cycle, Preferences& prefs){
+void Pump::update(unsigned long duration, unsigned long cycle, Preferences& prefs, unsigned long currentMillis){
     this->isInitialized = true;
     this->duration = duration;
     this->cycle = cycle;
-    this->previousMillis = millis();
+    this->previousMillis = currentMillis;
 
     prefs.putULong(getKey("duration").c_str(), duration);
     prefs.putULong(getKey("cycle").c_str(), cycle);
-    prefs.putULong(getKey("prevMillis").c_str(), this->previousMillis);
+
+    Serial.println("Pump updated, previous millis:" + String(this->previousMillis) + "at: " + millis());
 }
 
 void Pump::reset(Preferences& prefs){
@@ -72,7 +72,6 @@ void Pump::reset(Preferences& prefs){
 void Pump::loadFromPrefs(Preferences& prefs){
     this->duration = prefs.getULong(getKey("duration").c_str(), 0);
     this->cycle = prefs.getULong(getKey("cycle").c_str(), 0);
-    this->previousMillis = prefs.getULong(getKey("prevMillis").c_str(), 0);
 
     if(duration > 0 && cycle > 0){
         this->isInitialized = true;
