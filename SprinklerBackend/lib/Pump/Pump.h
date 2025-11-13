@@ -10,6 +10,7 @@ class Pump {
     bool isInitialized;
     bool isActive;
     bool pumpNowFlag;
+    bool justUpdated;
     unsigned long duration;
     unsigned long pumpNowDuration;
     unsigned long cycle;
@@ -20,7 +21,7 @@ class Pump {
     Pump(int pin);
     void pumpON(unsigned long currentMillis, Preferences& prefs);
     void pumpNow(unsigned long currentMillis);
-    void update(unsigned long duration, unsigned long cycle, Preferences& prefs, unsigned long currentMillis);
+    void update(unsigned long duration, unsigned long cycle, unsigned long currentMillis, Preferences& prefs);
     void reset(Preferences& prefs);
     void loadFromPrefs(Preferences& prefs);
     bool getIsActive();

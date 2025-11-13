@@ -17,8 +17,6 @@ const char* password = WIFI_PASSWORD;
 
 const int PORT = SERVER_PORT;
 
-unsigned long currentMillis = millis();
-
 AsyncWebServer server(PORT);
 
 Preferences preferences;
@@ -119,6 +117,8 @@ void setup() {
             Serial.println("JSON data: " + pumpsArray);
             Serial.printf("JSON array size: %d\n", pumpsArray.size());
 
+            unsigned long updateTime = millis();
+
             for(JsonObject pump : pumpsArray){
               int pumpId = pump["pumpId"];
               int duration = pump["duration"];
@@ -132,7 +132,7 @@ void setup() {
                   return;
               }
 
-              pumps[pumpId].update(duration, cycle, preferences, currentMillis);
+              pumps[pumpId].update(duration, cycle, updateTime, preferences);
 
               Serial.printf("Pump: %d, Duration: %d, Cycle: %d\n", pumpId, duration, cycle);
             }
@@ -291,6 +291,7 @@ void setup() {
 
 
 void loop() {
+  unsigned long currentMillis = millis();
   
   for(Pump& pump : pumps){
     if(pump.getPumpNowFlag()){
