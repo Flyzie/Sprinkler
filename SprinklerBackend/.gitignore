@@ -5,3 +5,4 @@
 .vscode/ipch
 .env
 lib/Config/Config.h
+lib/Config/Config.cpp

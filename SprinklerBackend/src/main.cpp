@@ -9,29 +9,28 @@
 #include <Preferences.h>
 #include <ESPmDNS.h>
 #include <config.h>
-
-using namespace std;
-
-const char* ssid = WIFI_SSID;
-const char* password = WIFI_PASSWORD;
-
-const int PORT = SERVER_PORT;
-
-AsyncWebServer server(PORT);
-
-Preferences preferences;
-
+#include <Network.h>
 
 #define PIN1 18
 #define PIN2 19
 #define WIFI_STANDBY_PIN 4
 #define WIFI_READY_PIN 2
 
+using namespace std;
+
+Network network;
+AsyncWebServer* server;
+
+Preferences preferences;
+
 vector<Pump> pumps;
 
 
 void setup() {
   Serial.begin(115200);
+
+  pinMode(WIFI_STANDBY_PIN, OUTPUT);
+  pinMode(WIFI_READY_PIN, OUTPUT);
 
   if(!LittleFS.begin(true)){
     Serial.println("LittleFS Mount Failed");
@@ -47,46 +46,11 @@ void setup() {
     pump.loadFromPrefs(preferences);
   }
   
-  pinMode(WIFI_STANDBY_PIN, OUTPUT);
-  pinMode(WIFI_READY_PIN, OUTPUT);
-
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    digitalWrite(WIFI_STANDBY_PIN, HIGH);
-    delay(500);
-    digitalWrite(WIFI_STANDBY_PIN, LOW);
-    delay(500);
-    Serial.println("Connecting to WiFi..");
-  }
-
-  if (WiFi.status() == WL_CONNECTED){
-    Serial.print("Wifi connected! SSID:  " );
-    digitalWrite(WIFI_READY_PIN, HIGH);
-    Serial.println(ssid);
-  }
-
-  if (!MDNS.begin(MDNS_HOSTNAME)) { 
-    Serial.println("Error setting up MDNS responder!");
-  } else {
-    Serial.println("mDNS responder started");
-    Serial.println("You can access this device at: http://sprinkler.local");
-  }
-
-  MDNS.addService("http", "tcp", 8080);
-
-  Serial.print("ESP32 WebServer running at: http://");
-  Serial.print(WiFi.localIP());
-  Serial.print(":");
-  Serial.println(PORT);
-
-  // Removed the "/" route so static files can be served from LittleFS
-  // server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-  //   request->send(200, "text/plain", "Hello from ESP32!");
-  // });
-
+  server = network.initNetwork();
+  
   static String body;
 
-  server.on("/pumpUpdate", HTTP_POST, 
+  server->on("/pumpUpdate", HTTP_POST, 
       [](AsyncWebServerRequest *request)
       {
         Serial.println("1");
@@ -143,7 +107,7 @@ void setup() {
         }
       });
 
-  server.on("/getPumps", HTTP_GET, 
+  server->on("/getPumps", HTTP_GET, 
       [](AsyncWebServerRequest *request)
       {
         JsonDocument doc;
@@ -161,7 +125,7 @@ void setup() {
         request->send(200, "application/json", response);
       });
 
-  server.on("/pumpNow", HTTP_POST, 
+  server->on("/pumpNow", HTTP_POST, 
       [](AsyncWebServerRequest *request)
       {
         Serial.println("1");
@@ -216,7 +180,7 @@ void setup() {
         }
       });
 
-  server.on("/resetPump", HTTP_POST, 
+  server->on("/resetPump", HTTP_POST, 
       [](AsyncWebServerRequest *request)
       {
         Serial.println("1");
@@ -269,7 +233,7 @@ void setup() {
         }
       });
 
-  server.onNotFound([](AsyncWebServerRequest *request) {
+  server->onNotFound([](AsyncWebServerRequest *request) {
   if (request->method() == HTTP_OPTIONS) {
     request->send(200);
   } else {
@@ -283,15 +247,25 @@ void setup() {
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
+  server->serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
 
-  server.begin();
+  server->begin();
   Serial.println("Server started!");
 }
 
 
 void loop() {
   unsigned long currentMillis = millis();
+
+  if(network.checkClients()){
+    digitalWrite(WIFI_READY_PIN, HIGH);
+  }else{
+    digitalWrite(WIFI_STANDBY_PIN, HIGH);
+    digitalWrite(WIFI_READY_PIN, LOW);
+    if(millis() % 60000 == 0){
+      Serial.println("Waiting for client" );
+    }
+  }
   
   for(Pump& pump : pumps){
     if(pump.getPumpNowFlag()){

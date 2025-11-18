@@ -6,7 +6,7 @@
 
 class Pump {
   private:
-    int pin; 
+    int pin;
     bool isInitialized;
     bool isActive;
     bool pumpNowFlag;
